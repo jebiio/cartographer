@@ -31,6 +31,8 @@ namespace handlers {
 
 void AddFixedFramePoseDataHandler::OnSensorData(
     const proto::AddFixedFramePoseDataRequest& request) {
+  // 'sensor_data_queue()'로 리턴되는 'BlockingQueue'는 이미 thread-safe하다.
+  // 따라서 'MapBuilderContext'에 대한 동기화되지 않는 참조를 얻기에 충분하다.
   // The 'BlockingQueue' returned by 'sensor_data_queue()' is already
   // thread-safe. Therefore it suffices to get an unsynchronized reference to
   // the 'MapBuilderContext'.
@@ -40,6 +42,8 @@ void AddFixedFramePoseDataHandler::OnSensorData(
           request.sensor_metadata().sensor_id(),
           sensor::FromProto(request.fixed_frame_pose_data())));
 
+  // 'LocalTrajectoryUploader'에서 'BlockingQueue'는 thread-safe하다.
+  // 따라서 'MapBuilderContext'에 대한 동기화되지 않은 레퍼런스를 얻기에 충분하다.
   // The 'BlockingQueue' in 'LocalTrajectoryUploader' is thread-safe.
   // Therefore it suffices to get an unsynchronized reference to the
   // 'MapBuilderContext'.

@@ -59,6 +59,7 @@ class AddSensorDataBatchHandler
   static cartographer::metrics::Family<metrics::Counter>*
       counter_metrics_family_;
 
+  // 각 client에 대해서 개별 메트릭스를 지니고 있음
   // Holds individual metrics for each client.
   absl::flat_hash_map<std::string, std::unique_ptr<ClientMetrics>>
       client_metric_map_;
