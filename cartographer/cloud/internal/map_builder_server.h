@@ -84,6 +84,7 @@ class MapBuilderServer : public MapBuilderServerInterface {
       std::unique_ptr<mapping::MapBuilderInterface> map_builder);
   ~MapBuilderServer() {}
 
+  //  gRPC server, 'LocalTrajectoryUploader'와 SLAM thread를 시작
   // Starts the gRPC server, the 'LocalTrajectoryUploader' and the SLAM thread.
   void Start() final;
 

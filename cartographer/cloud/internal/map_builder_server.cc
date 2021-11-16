@@ -183,6 +183,7 @@ void MapBuilderServer::OnLocalSlamResult(
   auto shared_range_data =
       std::make_shared<sensor::RangeData>(std::move(range_data));
 
+  // uplink 서버가 있고 submap 삽입이 발생한 경우, uploading을 위해서 이 local SLAM 결과를 큐에 넣는다.
   // If there is an uplink server and a submap insertion happened, enqueue this
   // local SLAM result for uploading.
   if (insertion_result &&
@@ -196,6 +197,7 @@ void MapBuilderServer::OnLocalSlamResult(
     CreateSensorDataForLocalSlamResult(sensor_id.id, trajectory_id, client_id,
                                        time, starting_submap_index_,
                                        *insertion_result, sensor_data.get());
+    // 이 부분을 좀더 강건하게 만들기!!                                       
     // TODO(cschuet): Make this more robust.
     if (insertion_result->insertion_submaps.front()->insertion_finished()) {
       ++starting_submap_index_;
@@ -276,6 +278,7 @@ void MapBuilderServer::NotifyFinishTrajectory(int trajectory_id) {
   for (auto& entry : local_slam_subscriptions_[trajectory_id]) {
     MapBuilderContextInterface::LocalSlamSubscriptionCallback callback =
         entry.second;
+    // trajectory가 완료되면 'nullptr' signals subscriber
     // 'nullptr' signals subscribers that the trajectory finished.
     callback(nullptr);
   }

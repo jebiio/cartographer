@@ -41,6 +41,7 @@ class MapBuilderContextInterface : public async_grpc::ExecutionContext {
     std::unique_ptr<const mapping::TrajectoryBuilderInterface::InsertionResult>
         insertion_result;
   };
+  // 'nullptr' signals subscribers를 호출. 
   // Calling with 'nullptr' signals subscribers that the subscription has ended,
   // e.g. this happens when the corresponding trajectory was finished and hence
   // no more local SLAM updates will occur.

@@ -37,17 +37,21 @@ class LocalTrajectoryUploaderInterface {
 
   virtual ~LocalTrajectoryUploaderInterface() = default;
 
+  // upload thread를 시작   
   // Starts the upload thread.
   virtual void Start() = 0;
 
+  // upload thread를 셧다운. 이 method는 셧다운이 완료될때까지 block된다.
   // Shuts down the upload thread. This method blocks until the shutdown is
   // complete.
   virtual void Shutdown() = 0;
 
+  // upload 시킬 Add*DataRequest 메시지를 큐에 넣기
   // Enqueue an Add*DataRequest message to be uploaded.
   virtual void EnqueueSensorData(
       std::unique_ptr<proto::SensorData> sensor_data) = 0;
 
+  // uplink에서 지정한 설정으로 새로운 trajectory를 생성. 리턴 'value'가 '!value.ok()'라는 것은 생성에 실패했다는 뜻이다.
   // Creates a new trajectory with the specified settings in the uplink. A
   // return 'value' with '!value.ok()' indicates that the creation failed.
   virtual grpc::Status AddTrajectory(
@@ -61,6 +65,7 @@ class LocalTrajectoryUploaderInterface {
       int local_trajectory_id) const = 0;
 };
 
+// LocalTrajectoryUploader의 실제 구현을 반환
 // Returns LocalTrajectoryUploader with the actual implementation.
 std::unique_ptr<LocalTrajectoryUploaderInterface> CreateLocalTrajectoryUploader(
     const std::string& uplink_server_address, int batch_size,

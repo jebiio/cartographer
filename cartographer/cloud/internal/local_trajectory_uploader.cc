@@ -40,6 +40,7 @@ constexpr int kConnectionRecoveryTimeoutInSeconds = 60;
 constexpr int kTokenRefreshIntervalInSeconds = 60;
 const common::Duration kPopTimeout = common::FromMilliseconds(100);
 
+// 복구 불가능한 에러로 간주되는 '::grpc::StatusCode'를 정의하고 이 경우 client가 재시도 하지 않는다.
 // This defines the '::grpc::StatusCode's that are considered unrecoverable
 // errors and hence no retries will be attempted by the client.
 const std::set<::grpc::StatusCode> kUnrecoverableStatusCodes = {
@@ -156,6 +157,7 @@ void LocalTrajectoryUploader::TryRecovery() {
   }
   LOG(INFO) << "Uplink channel ready, trying recovery.";
 
+  // sensor_data_queue를 다음 새로운 submap으로 포워드
   // Wind the sensor_data_queue forward to the next new submap.
   LOG(INFO) << "LocalTrajectoryUploader tries to recover with next submap.";
   while (true) {
@@ -178,14 +180,17 @@ void LocalTrajectoryUploader::TryRecovery() {
     }
   }
 
+  // trajectories는 uplink 쪽에서 인터럽트가 될 수 있으므로, 더이상 trajectories를 upload하지 않을 수 있다.
   // Because the trajectories may be interrupted on the uplink side, we can no
   // longer upload to those.
   for (auto& entry : local_trajectory_id_to_trajectory_info_) {
     entry.second.uplink_trajectory_id.reset();
   }
+  // 만약 uplink가 재시작되지 않고 연결만 인터럽트되는 경우에, 이는 uplink에서 trajectories가 leak되는 상황이 된다.
   // TODO(gaschler): If the uplink did not restart but only the connection was
   // interrupted, this leaks trajectories in the uplink.
 
+  // trajectories를 재생성하는 시도
   // Attempt to recreate the trajectories.
   for (const auto& entry : local_trajectory_id_to_trajectory_info_) {
     grpc::Status status = RegisterTrajectory(entry.first);
@@ -212,6 +217,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
       proto::SensorData* added_sensor_data = batch_request.add_sensor_data();
       *added_sensor_data = *sensor_data;
 
+      // subamp도 역시 trajectory id를 가지고 있고 이는 반드시 uplink의 trajectory id로 변환되어야만 한다.
       // A submap also holds a trajectory id that must be translated to uplink's
       // trajectory id.
       if (added_sensor_data->has_local_slam_result_data()) {
@@ -234,6 +240,7 @@ void LocalTrajectoryUploader::ProcessSendQueue() {
           batch_request.clear_sensor_data();
           continue;
         }
+        // 복구 불가능한 에러 발생. 복구 시도.
         // Unrecoverable error occurred. Attempt recovery.
         batch_request.clear_sensor_data();
         TryRecovery();
@@ -250,6 +257,7 @@ bool LocalTrajectoryUploader::TranslateTrajectoryId(
     return false;
   }
   if (!it->second.uplink_trajectory_id.has_value()) {
+    // uplink server로 아직 trajectory 등록할 수 없음.
     // Could not yet register trajectory with uplink server.
     return false;
   }
@@ -279,6 +287,7 @@ grpc::Status LocalTrajectoryUploader::RegisterTrajectory(
   *request.mutable_trajectory_builder_options() =
       trajectory_info.trajectory_options;
   for (const SensorId& sensor_id : trajectory_info.expected_sensor_ids) {
+    // Range sensors는 앞으로 전달되지 않고 LocalSlamResult로 결합됨.
     // Range sensors are not forwarded, but combined into a LocalSlamResult.
     if (sensor_id.type != SensorId::SensorType::RANGE) {
       *request.add_expected_sensor_ids() = cloud::ToProto(sensor_id);
