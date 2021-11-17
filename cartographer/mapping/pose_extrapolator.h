@@ -30,6 +30,8 @@
 namespace cartographer {
 namespace mapping {
 
+// 선형 속도와 각속도를 estimation하기 위해서 특정 시간 동안 pose를 유지한다.
+// motion을 추정하기 위해서 속도를 사용한다. 추정을 향상시키기 위해서 가능하다면 IMU나 odometry를 사용한다.
 // Keep poses for a certain duration to estimate linear and angular velocity.
 // Uses the velocities to extrapolate motion. Uses IMU and/or odometry data if
 // available to improve the extrapolation.
@@ -45,6 +47,7 @@ class PoseExtrapolator : public PoseExtrapolatorInterface {
       common::Duration pose_queue_duration, double imu_gravity_time_constant,
       const sensor::ImuData& imu_data);
 
+  // 마지막으로 추가된 pose의 시간을 혹은 pose가 추가되지 않은 경우 Time::min()을 반환한다. 
   // Returns the time of the last added pose or Time::min() if no pose was added
   // yet.
   common::Time GetLastPoseTime() const override;
@@ -58,6 +61,7 @@ class PoseExtrapolator : public PoseExtrapolatorInterface {
   ExtrapolationResult ExtrapolatePosesWithGravity(
       const std::vector<common::Time>& times) override;
 
+  // tracking frame으로부터 gravity aligned frame으로 rotation으로서 현재 중력 정렬 alignment estimate를 반환한다.
   // Returns the current gravity alignment estimate as a rotation from
   // the tracking frame into a gravity aligned frame.
   Eigen::Quaterniond EstimateGravityOrientation(common::Time time) override;

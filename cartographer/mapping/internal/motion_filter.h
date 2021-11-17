@@ -30,11 +30,14 @@ namespace mapping {
 proto::MotionFilterOptions CreateMotionFilterOptions(
     common::LuaParameterDictionary* parameter_dictionary);
 
+// pose들을 입력으로 받아서 더 적은 pose들을 얻기 위해서 필터링
 // Takes poses as input and filters them to get fewer poses.
 class MotionFilter {
  public:
   explicit MotionFilter(const proto::MotionFilterOptions& options);
 
+  // 누적 motion이 임계값을 넘는 경우, false를 반환.
+  // 그렇지 않은 경우 상대 motion은 누적되고 true를 반환
   // If the accumulated motion (linear, rotational, or time) is above the
   // threshold, returns false. Otherwise the relative motion is accumulated and
   // true is returned.

@@ -23,6 +23,8 @@
 namespace cartographer {
 namespace mapping {
 
+// IMU로부터 각속도와 선형가속을 사용하여 orientation을 추적.
+// 평균 선형 가속(천천히 움직인다는 가정)은 중력을 직접 측정하고 yaw는 drift가 있지만 roll/pitch는 drift 없음.
 // Keeps track of the orientation using angular velocities and linear
 // accelerations from an IMU. Because averaged linear acceleration (assuming
 // slow movement) is a direct measurement of gravity, roll/pitch does not drift,
@@ -31,18 +33,22 @@ class ImuTracker {
  public:
   ImuTracker(double imu_gravity_time_constant, common::Time time);
 
+  // 주어진 시간에 앞서 이를 반영하기 위해서 orientation을 업데이트
   // Advances to the given 'time' and updates the orientation to reflect this.
   void Advance(common::Time time);
 
+  // 읽는 IMU로부터 업데이트(IMU 프레임에서)
   // Updates from an IMU reading (in the IMU frame).
   void AddImuLinearAccelerationObservation(
       const Eigen::Vector3d& imu_linear_acceleration);
   void AddImuAngularVelocityObservation(
       const Eigen::Vector3d& imu_angular_velocity);
 
+  // 현재 시간 얻기
   // Query the current time.
   common::Time time() const { return time_; }
 
+  // 현재 orientation estimate 얻기
   // Query the current orientation estimate.
   Eigen::Quaterniond orientation() const { return orientation_; }
 

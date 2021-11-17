@@ -104,6 +104,8 @@ void PoseExtrapolator::AddOdometryData(
   if (odometry_data_.size() < 2) {
     return;
   }
+  // ToDo: 마지막 2개 odometry pose만 사용하는 것보다 더 사용해서 개선하기
+  // tracking 프레임에서 추정을 계산
   // TODO(whess): Improve by using more than just the last two odometry poses.
   // Compute extrapolation in the tracking frame.
   const sensor::OdometryData& odometry_data_oldest = odometry_data_.front();
@@ -155,6 +157,7 @@ Eigen::Quaterniond PoseExtrapolator::EstimateGravityOrientation(
 
 void PoseExtrapolator::UpdateVelocitiesFromPoses() {
   if (timed_pose_queue_.size() < 2) {
+    // 속도를 추정하기 위해서 2개 pose가 필요하다.
     // We need two poses to estimate velocities.
     return;
   }
@@ -197,6 +200,8 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
                                          ImuTracker* const imu_tracker) const {
   CHECK_GE(time, imu_tracker->time());
   if (imu_data_.empty() || time < imu_data_.front().time) {
+    // 'time'까지 IMU 데이터가 없다. ImuTracker를 고도화시키고 pose로부터 각속도를 사용하고
+    // 2D 안정화에 도움을 주기 위해서 가짜 중력을 사용한다.
     // There is no IMU data until 'time', so we advance the ImuTracker and use
     // the angular velocities from poses and fake gravity to help 2D stability.
     imu_tracker->Advance(time);
@@ -207,6 +212,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     return;
   }
   if (imu_tracker->time() < imu_data_.front().time) {
+    // 'imu_data_'의 시작에 앞서
     // Advance to the beginning of 'imu_data_'.
     imu_tracker->Advance(imu_data_.front().time);
   }

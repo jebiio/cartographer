@@ -49,6 +49,7 @@ void ImuTracker::Advance(const common::Time time) {
 
 void ImuTracker::AddImuLinearAccelerationObservation(
     const Eigen::Vector3d& imu_linear_acceleration) {
+  // 'imu_gravity_time_constant'를 사용해서 exponential 이동 평균으로 'gravity_vector_'를 업데이트 
   // Update the 'gravity_vector_' with an exponential moving average using the
   // 'imu_gravity_time_constant'.
   const double delta_t =
@@ -59,6 +60,7 @@ void ImuTracker::AddImuLinearAccelerationObservation(
   const double alpha = 1. - std::exp(-delta_t / imu_gravity_time_constant_);
   gravity_vector_ =
       (1. - alpha) * gravity_vector_ + alpha * imu_linear_acceleration;
+  // 'orientation_'를 변경하여 현재 'gravity_vector_'와 맞춘다.
   // Change the 'orientation_' so that it agrees with the current
   // 'gravity_vector_'.
   const Eigen::Quaterniond rotation = FromTwoVectors(
